@@ -50,6 +50,7 @@ export default function Index() {
             {[
               {
                 src: 'https://user-images.githubusercontent.com/27310414/169316398-8b43fba5-ded3-4bd7-9f97-efe8bf3251e6.svg',
+                href: 'https://vercel.com',
               },
               {
                 src: 'https://user-images.githubusercontent.com/27310414/169313861-d3e245c9-c79f-4d2e-874d-f6d719f7c2dc.svg',

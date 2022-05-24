@@ -45,6 +45,7 @@ export const TwoFactorForm = () => {
     transition.state === 'submitting' &&
     transition.submission.formData.get('_action') === 'verify';
 
+  console.log(actionData?.authenticationChallenge);
   return (
     <>
       <div>
@@ -63,7 +64,7 @@ export const TwoFactorForm = () => {
               <input
                 type="hidden"
                 name="authenticationChallengeId"
-                value={actionData?.totpChallengeId}
+                value={actionData?.authenticationChallenge?.id}
               />
               <input type="hidden" name="userId" value={actionData?.userId} />
               <input type="hidden" name="_action" value="verify" />
@@ -99,8 +100,9 @@ export const TwoFactorForm = () => {
             <div>
               <h3 className="text-xl mb-3">SMS verification code</h3>
               <p className="mb-3">
-                Use the code that is sent to your registered phone number that
-                ends with {actionData?.phoneNumber}
+                {hasAllFactorsEnabled
+                  ? `Send an SMS message to you registered phone number that ends with ${actionData?.phoneNumber}`
+                  : `We've sent an SMS message to you registered phone number that ends with ${actionData?.phoneNumber}`}
               </p>{' '}
               <Form method="post">
                 <input type="hidden" name="userId" value={actionData?.userId} />
@@ -111,9 +113,15 @@ export const TwoFactorForm = () => {
                 />
                 <input
                   type="hidden"
+                  name="phoneNumber"
+                  value={actionData?.phoneNumber}
+                />
+                <input
+                  type="hidden"
                   name="totpFactorId"
                   value={actionData?.totpFactorId}
                 />
+
                 {hasAllFactorsEnabled && (
                   <Button
                     name="_action"
@@ -124,8 +132,16 @@ export const TwoFactorForm = () => {
                       transition.submission.formData.get('_action') === 'sms'
                     }
                   >
-                    Send authentication code
+                    Send verification code
                   </Button>
+                )}
+                {actionData?.message && (
+                  <div
+                    className="my-4 text-sm text-green-700"
+                    id="password-error"
+                  >
+                    {actionData?.message}
+                  </div>
                 )}
               </Form>
               <Form method="post" onChange={handleChange}>
@@ -147,7 +163,12 @@ export const TwoFactorForm = () => {
                 <input
                   type="hidden"
                   name="authenticationChallengeId"
-                  value={actionData?.smsChallengeId}
+                  value={actionData?.authenticationChallenge?.id}
+                />
+                <input
+                  type="hidden"
+                  name="phoneNumber"
+                  value={actionData?.phoneNumber}
                 />
                 {actionData?.errors?.verificationCode && (
                   <div className="my-4 text-red-700" id="password-error">
@@ -168,14 +189,12 @@ export const TwoFactorForm = () => {
           )}
         </>
       </div>
-      {hasAllFactorsEnabled && (
+      {hasAllFactorsEnabled && activeForm === 'totp' && (
         <button
           className="block text-gray-700  my-5 underline"
-          onClick={() =>
-            activeForm === 'sms' ? setActiveForm('totp') : setActiveForm('sms')
-          }
+          onClick={() => setActiveForm('sms')}
         >
-          {activeForm === 'sms' ? 'Use authenticator app' : 'Use SMS'}
+          Use SMS instead
         </button>
       )}
     </>

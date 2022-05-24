@@ -88,20 +88,20 @@ export const action: ActionFunction = async ({ request }) => {
 
       // Has TOTP verification Enabled
       if (user.totpFactorId && !user.smsFactorId) {
-        const totpChallenge = await workos.mfa.challengeFactor({
+        const authenticationChallenge = await workos.mfa.challengeFactor({
           authenticationFactorId: user.totpFactorId,
         });
 
         return {
           userId: user.id,
-          totpChallengeId: user.totpFactorId && totpChallenge.id,
+          authenticationChallenge,
           totpFactorId: user.totpFactorId,
         };
       }
 
       //  has SMS verification enabled
       if (user.smsFactorId && !user.totpFactorId) {
-        const smsChallenge = await workos.mfa.challengeFactor({
+        const authenticationChallenge = await workos.mfa.challengeFactor({
           authenticationFactorId: user.smsFactorId,
         });
 
@@ -110,7 +110,7 @@ export const action: ActionFunction = async ({ request }) => {
           phoneNumber: user.phoneNumber!.substring(
             user.phoneNumber!.length - 3,
           ),
-          smsChallengeId: user.smsFactorId && smsChallenge.id,
+          authenticationChallenge,
           smsFactorId: user.smsFactorId,
         };
       }
@@ -123,28 +123,32 @@ export const action: ActionFunction = async ({ request }) => {
 
       // Has all factors enabled
       if (user.totpFactorId && user.smsFactorId) {
-        const totpChallenge = await workos.mfa.challengeFactor({
+        const authenticationChallenge = await workos.mfa.challengeFactor({
           authenticationFactorId: user.totpFactorId,
         });
-
         return {
           userId: user.id,
-          totpChallengeId: totpChallenge.id,
+          authenticationChallenge,
           totpFactorId: user.totpFactorId,
           smsFactorId: user.smsFactorId,
+          phoneNumber: user.phoneNumber!.substring(
+            user.phoneNumber!.length - 3,
+          ),
         };
       }
 
     // User has all factors enabled and they want to use SMS
     case 'sms':
-      const smsChallenge = await workos.mfa.challengeFactor({
+      const authenticationChallenge = await workos.mfa.challengeFactor({
         authenticationFactorId: values.smsFactorId as string,
       });
 
       return {
+        authenticationChallenge,
+        phoneNumber: values.phoneNumber,
         smsFactorId: values.smsFactorId,
-        smsChallengeId: smsChallenge.id,
         totpFactorId: values.totpFactorId,
+        message: 'We sent a message to your registered phone number',
       };
 
     // Verify the submitted verification code along with the challenge
@@ -155,6 +159,7 @@ export const action: ActionFunction = async ({ request }) => {
         userId,
         totpFactorId,
         smsFactorId,
+        phoneNumber,
       } = values;
 
       try {
@@ -168,7 +173,10 @@ export const action: ActionFunction = async ({ request }) => {
             {
               totpFactorId,
               smsFactorId,
-              authenticationChallengeId,
+              authenticationChallenge: {
+                id: authenticationChallengeId,
+              },
+              phoneNumber,
               errors: {
                 verificationCode: `Invalid verification code`,
               },
