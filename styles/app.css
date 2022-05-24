@@ -1,0 +1,24 @@
+@tailwind base;
+
+.container {
+  height: 50px;
+  width: 300px;
+}
+
+.character {
+  @apply border-2 leading-[50px] ml-2 text-3xl bg-white border-gray-100 rounded-md;
+}
+
+.character:first-child {
+  margin-left: 0;
+}
+
+.character--inactive {
+  @apply bg-gray-50;
+}
+
+.character--selected {
+  @apply border-2 border-solid border-blue-500;
+}
+@tailwind components;
+@tailwind utilities;
