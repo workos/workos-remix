@@ -4,7 +4,7 @@ import {
   useSubmit,
   useTransition,
 } from '@remix-run/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '../shared';
 import { VerificationInput } from '../auth/verification-input';
 
@@ -13,7 +13,8 @@ export const TwoFactorForm = () => {
   const actionData = useActionData();
   const transition = useTransition();
   const [code, setCode] = useState('');
-  const [activeForm, setActiveForm] = useState<'sms' | 'totp'>('totp');
+
+  const [activeForm, setActiveForm] = useState<'sms' | 'totp'>();
 
   const handleChange = (e) => {
     if (e.target.value.length === 6) {
@@ -25,6 +26,16 @@ export const TwoFactorForm = () => {
   const hasTotpEnabled = actionData?.totpFactorId;
   const hasMfaEnabled = hasSmsEnabled || hasTotpEnabled;
   const hasAllFactorsEnabled = hasSmsEnabled && hasTotpEnabled;
+
+  useEffect(() => {
+    if (hasSmsEnabled) {
+      setActiveForm('sms');
+    }
+
+    if (hasTotpEnabled) {
+      setActiveForm('totp');
+    }
+  }, [hasTotpEnabled, hasSmsEnabled]);
 
   if (!hasMfaEnabled) {
     return null;
@@ -89,7 +100,7 @@ export const TwoFactorForm = () => {
               <h3 className="text-xl mb-3">SMS verification code</h3>
               <p className="mb-3">
                 Use the code that is sent to your registered phone number that
-                ends with
+                ends with {actionData?.phoneNumber}
               </p>{' '}
               <Form method="post">
                 <input type="hidden" name="userId" value={actionData?.userId} />
@@ -103,17 +114,19 @@ export const TwoFactorForm = () => {
                   name="totpFactorId"
                   value={actionData?.totpFactorId}
                 />
-                <Button
-                  name="_action"
-                  value="sms"
-                  type="submit"
-                  isLoading={
-                    transition.state === 'submitting' &&
-                    transition.submission.formData.get('_action') === 'sms'
-                  }
-                >
-                  Send authentication code
-                </Button>
+                {hasAllFactorsEnabled && (
+                  <Button
+                    name="_action"
+                    value="sms"
+                    type="submit"
+                    isLoading={
+                      transition.state === 'submitting' &&
+                      transition.submission.formData.get('_action') === 'sms'
+                    }
+                  >
+                    Send authentication code
+                  </Button>
+                )}
               </Form>
               <Form method="post" onChange={handleChange}>
                 <div className="my-4">
